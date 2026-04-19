@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>축구스타 김도경</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{
+    width:100%;height:100%;
+    overflow:hidden;
+    background:#0d1a0d;
+    font-family:'Noto Sans KR',sans-serif;
+    color:#fff;
+    touch-action:manipulation;
+  }
+
+  /* ===== ROTATE PROMPT (세로모드일 때만 표시) ===== */
+  #rotate-prompt{
+    display:none;
+    position:fixed;inset:0;
+    background:#0a0a0a;
+    z-index:999;
+    flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  }
+  @media (orientation:portrait){
+    #rotate-prompt{display:flex}
+    #app{display:none}
+  }
+  @media (orientation:landscape){
+    #rotate-prompt{display:none}
+    #app{display:flex}
+  }
+  .rotate-icon{font-size:5rem;animation:rotateAnim 1.5s ease-in-out infinite}
+  @keyframes rotateAnim{
+    0%{transform:rotate(0deg)}
+    40%{transform:rotate(-90deg)}
+    60%{transform:rotate(-90deg)}
+    100%{transform:rotate(0deg)}
+  }
+  .rotate-title{
+    font-family:'Black Han Sans',sans-serif;font-size:1.6rem;color:#FFD700;
+    letter-spacing:3px;text-align:center;
+  }
+  .rotate-sub{font-size:.9rem;color:#aaa;text-align:center;line-height:1.6}
+
+  /* ===== APP CONTAINER ===== */
+  #app{
+    width:100vw;height:100vh;
+    display:flex;flex-direction:row;
+    align-items:stretch;
+  }
+
+  /* ===== INTRO ===== */
+  #intro-screen{
+    position:fixed;inset:0;
+    background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:200;gap:16px;padding:10px;
+  }
+  #intro-title{
+    font-family:'Black Han Sans',sans-serif;font-size:clamp(1.6rem,5vw,3.2rem);
+    background:linear-gradient(90deg,#909090,#d8d8d8,#ffffff,#d8d8d8,#909090);
+    background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:4px;animation:shimmer 3s ease-in-out infinite;
+    text-align:center;
+  }
+  @keyframes shimmer{0%,100%{filter:drop-shadow(0 2px 8px rgba(200,200,200,0.3))}50%{filter:drop-shadow(0 2px 24px rgba(220,220,220,0.7))}}
+  #intro-vs-row{display:flex;align-items:center;gap:16px;font-family:'Black Han Sans',sans-serif;font-size:clamp(1rem,3.5vw,1.5rem)}
+  .intro-team-name-kor{color:#e53935}
+  .intro-team-name-bra{color:#F5D800}
+  .intro-vs-text{color:#777;font-size:.9rem}
+  #intro-subtitle{color:#999;font-size:.78rem;text-align:center;line-height:1.6}
+  .intro-role-btns{display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+  .intro-role-btn{
+    padding:12px 22px;font-size:.9rem;font-family:'Black Han Sans',sans-serif;
+    border:none;border-radius:10px;cursor:pointer;letter-spacing:2px;
+    display:flex;align-items:center;gap:8px;
+    transition:transform .15s;font-weight:900;
+  }
+  .intro-role-btn:active{transform:scale(0.95)}
+  #intro-btn-korea{background:linear-gradient(135deg,#c62828,#e53935);color:#fff;box-shadow:0 4px 20px #e5393555}
+  #intro-btn-brazil{background:linear-gradient(135deg,#c8a800,#F5D800);color:#1a1200;box-shadow:0 4px 20px #F5D80055}
+  .intro-rule{font-size:.68rem;color:#444;text-align:center;line-height:1.6;border-top:1px solid #222;padding-top:10px;max-width:380px}
+
+  /* ===== LEFT PANEL (SCORE) ===== */
+  #left-panel{
+    width:110px;min-width:100px;
+    background:rgba(0,0,0,0.4);
+    border-right:1px solid rgba(255,255,255,0.08);
+    display:flex;flex-direction:column;align-items:center;
+    padding:6px 4px;gap:6px;flex-shrink:0;
+  }
+  #left-panel h3{
+    font-family:'Black Han Sans',sans-serif;font-size:.7rem;
+    background:linear-gradient(90deg,#c0c0c0,#fff,#c0c0c0);
+    background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:2px;
+  }
+  #score-table{border-collapse:collapse;font-size:.62rem;width:100%}
+  #score-table th{padding:3px 2px;border:1px solid rgba(255,255,255,0.1);text-align:center;font-family:'Black Han Sans',sans-serif;font-size:.58rem}
+  #score-table td{padding:3px 2px;border:1px solid rgba(255,255,255,0.07);text-align:center;font-size:.68rem}
+  .th-round{background:rgba(255,255,255,0.06);color:#777;width:18px}
+  .th-korea{background:rgba(229,57,53,0.15)}
+  .th-brazil{background:rgba(245,216,0,0.15)}
+  .th-flag-cell{display:flex;align-items:center;justify-content:center;gap:2px}
+  .th-flag-mini{width:16px;height:11px;border-radius:1px;overflow:hidden;display:inline-flex;flex-shrink:0}
+  .td-o-kor{color:#ff7070;font-weight:900;font-size:.8rem}
+  .td-x-kor{color:#ff7070;opacity:.4;font-size:.72rem}
+  .td-o-bra{color:#F5D800;font-weight:900;font-size:.8rem}
+  .td-x-bra{color:#F5D800;opacity:.4;font-size:.72rem}
+  .td-empty{color:#222}
+  #total-score{
+    font-family:'Black Han Sans',sans-serif;font-size:.65rem;
+    background:rgba(0,0,0,0.5);border-radius:6px;padding:4px 6px;
+    text-align:center;border:1px solid rgba(255,255,255,0.07);width:100%;line-height:1.6;
+  }
+  .kor-sc{color:#ff8a80}.bra-sc{color:#F5D800}
+
+  /* ===== CENTER ===== */
+  #center-col{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-width:0;
+  }
+  #game-title{
+    font-family:'Black Han Sans',sans-serif;font-size:clamp(.7rem,2.2vw,1.1rem);
+    background:linear-gradient(90deg,#808080,#d0d0d0,#ffffff,#d0d0d0,#808080);
+    background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:3px;margin-bottom:2px;
+  }
+  #round-info{font-size:.6rem;color:#666;margin-bottom:3px;min-height:12px;text-align:center}
+
+  /* ===== STADIUM ===== */
+  #stadium-wrap{
+    position:relative;
+    width:100%;
+    /* Fill remaining height minus title */
+    height:calc(100vh - 36px);
+    max-height:100%;
+  }
+  #stadium{
+    position:absolute;inset:0;
+    background:linear-gradient(160deg,#1b5e20 0%,#2e7d32 45%,#388e3c 75%,#1b5e20 100%);
+    border-radius:8px;overflow:hidden;border:2px solid #ffffff18;
+  }
+  .stripe{position:absolute;width:100%;background:rgba(255,255,255,0.03)}
+  #field-center-line{position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(255,255,255,0.15)}
+  #pen-arc{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100px;height:50px;border-top:1px solid rgba(255,255,255,0.15);border-radius:50px 50px 0 0}
+
+  /* GOAL */
+  #goal-wrap{position:absolute;top:2%;left:50%;transform:translateX(-50%);width:64%;height:50%}
+  .post{position:absolute;background:linear-gradient(90deg,#b0bec5,#eceff1,#b0bec5);border-radius:3px}
+  #bar-top{top:0;left:0;width:100%;height:8px}
+  #post-l{top:0;left:0;width:8px;height:100%}
+  #post-r{top:0;right:0;width:8px;height:100%}
+  #dep-top{position:absolute;top:0;left:8px;width:calc(100% - 16px);height:6px;background:linear-gradient(180deg,#78909c,#546e7a);transform-origin:top;transform:rotateX(-55deg) translateY(-3px)}
+  #dep-l{position:absolute;top:8px;left:0;width:6px;height:calc(100% - 8px);background:linear-gradient(90deg,#78909c,#546e7a);transform-origin:left;transform:rotateY(55deg) translateX(-2px)}
+  #dep-r{position:absolute;top:8px;right:0;width:6px;height:calc(100% - 8px);background:linear-gradient(270deg,#78909c,#546e7a);transform-origin:right;transform:rotateY(-55deg) translateX(2px)}
+  #goal-net{position:absolute;top:8px;left:8px;width:calc(100% - 16px);height:calc(100% - 8px);overflow:hidden}
+  #netCanvas{display:block;width:100%;height:100%}
+  #zone-nums{
+    position:absolute;top:10px;left:10px;width:calc(100% - 20px);height:calc(100% - 10px);
+    display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;
+    pointer-events:none;z-index:4;
+  }
+  .zn{display:flex;align-items:center;justify-content:center;font-family:'Black Han Sans',sans-serif;font-size:clamp(.8rem,2.5vw,1.1rem);color:rgba(255,255,255,0.4);text-shadow:0 1px 3px #000}
+
+  /* PERSONS */
+  .person{position:absolute;width:clamp(24px,4vw,36px);display:flex;flex-direction:column;align-items:center;transition:all 0.5s cubic-bezier(.4,0,.2,1)}
+  .p-head{width:clamp(14px,2.4vw,22px);height:clamp(14px,2.4vw,22px);background:#ffdbac;border-radius:50%;border:1px solid #c8a055}
+  .p-torso{width:clamp(18px,3.2vw,28px);height:clamp(22px,3.8vw,34px);border-radius:5px;margin-top:1px}
+  .p-legs{display:flex;gap:3px;margin-top:1px}
+  .p-leg{width:clamp(6px,1.1vw,10px);height:clamp(14px,2.4vw,22px);border-radius:3px}
+  .korea-shirt{background:#C62828}.korea-leg{background:#B71C1C}
+  .brazil-shirt{background:#F5D800}.brazil-leg{background:#c8a800}
+  #keeper{position:absolute;top:33%;left:50%;transform:translateX(-50%);z-index:10}
+  #kicker{position:absolute;bottom:10%;left:50%;transform:translateX(-50%);z-index:20}
+
+  /* BALL */
+  #ball{position:absolute;bottom:20%;left:50%;transform:translateX(-50%);font-size:clamp(18px,3.5vw,28px);z-index:15;transition:all 0.6s cubic-bezier(.25,.46,.45,.94);filter:drop-shadow(0 2px 4px #00000099)}
+
+  /* COUNTDOWN */
+  #countdown-display{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Black Han Sans',sans-serif;font-size:clamp(2.5rem,8vw,4.5rem);color:#FFD700;text-shadow:0 0 20px #FFD700;z-index:35;pointer-events:none;opacity:0;transition:opacity 0.2s}
+  #status-bar{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:clamp(.6rem,1.8vw,.78rem);font-weight:700;color:#FFD700;z-index:25;text-shadow:0 1px 3px #000;min-height:14px}
+
+  /* TUTORIAL */
+  #tutorial{position:absolute;inset:0;background:rgba(0,0,0,0.9);z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:8px;padding:12px}
+  #tutorial h2{font-family:'Black Han Sans',sans-serif;font-size:clamp(.95rem,2.8vw,1.3rem);color:#FFD700}
+  #tutorial p{color:#ddd;font-size:clamp(.72rem,2vw,.92rem);line-height:1.9;text-align:center;max-width:400px}
+  #tut-role-big{font-family:'Black Han Sans',sans-serif;font-size:clamp(1rem,3.2vw,1.6rem);letter-spacing:3px;text-align:center;padding:6px 24px;border-radius:8px;margin-top:2px}
+  #tutorial .start-btn{margin-top:8px;padding:10px 28px;font-size:clamp(.82rem,2.4vw,1rem);font-family:'Black Han Sans',sans-serif;background:#FFD700;color:#1a1a1a;border:none;border-radius:8px;cursor:pointer;letter-spacing:2px;min-width:100px}
+
+  /* RIGHT PANEL */
+  #right-panel{
+    width:clamp(80px,14vw,120px);
+    background:rgba(0,0,0,0.35);
+    border-left:1px solid rgba(255,255,255,0.07);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;padding:6px 4px;flex-shrink:0;
+  }
+  /* CLICK HINT */
+  #click-hint{
+    display:none;flex-direction:column;align-items:center;gap:2px;
+    animation:clickPulse 0.9s ease-in-out infinite;
+  }
+  #click-role-badge{font-family:'Black Han Sans',sans-serif;font-size:.6rem;letter-spacing:1px;padding:3px 8px;border-radius:6px;text-align:center;white-space:nowrap}
+  #click-text{font-family:'Black Han Sans',sans-serif;font-size:clamp(.85rem,2.5vw,1.1rem);letter-spacing:2px;color:#FFD700;text-shadow:0 0 10px #FFD700,0 0 20px #FFD70099}
+  #click-arrow{font-size:clamp(1.2rem,3.5vw,1.8rem);color:#FFD700;line-height:1;text-shadow:0 0 10px #FFD700;animation:arrowBounce 0.9s ease-in-out infinite}
+  @keyframes clickPulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  @keyframes arrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  #right-label{font-size:.6rem;color:#666;text-align:center;line-height:1.6}
+  #controls{display:none;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+  .pos-btn{
+    aspect-ratio:1;width:100%;
+    background:rgba(255,255,255,0.88);border:none;border-radius:50%;
+    font-weight:900;font-size:clamp(.9rem,2.8vw,1.2rem);
+    cursor:pointer;color:#1a1a1a;
+    transition:background .1s,transform .1s;
+    font-family:'Black Han Sans',sans-serif;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pos-btn:active{background:#FFD700;transform:scale(0.92)}
+
+  /* RESULT */
+  #result-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.52);z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;border-radius:8px}
+  #result-banner{background:rgba(5,10,5,0.92);border:2px solid #FFD700;border-radius:14px;padding:16px 28px;text-align:center;animation:bannerIn .4s cubic-bezier(.17,.67,.4,1.4);max-width:90%}
+  @keyframes bannerIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  #result-main{font-family:'Black Han Sans',sans-serif;font-size:clamp(1.6rem,5vw,2.6rem);letter-spacing:3px;text-shadow:0 0 20px currentColor}
+  #result-sub{font-size:clamp(.72rem,2vw,.88rem);color:#eee;margin-top:6px}
+  #result-log{font-size:clamp(.6rem,1.7vw,.74rem);color:#bbb;margin-top:4px}
+  #result-scores{font-size:clamp(.6rem,1.7vw,.74rem);color:#aaa;margin-top:4px}
+  #next-btn{margin-top:12px;padding:9px 22px;font-size:clamp(.78rem,2.2vw,.9rem);font-family:'Black Han Sans',sans-serif;background:#FFD700;color:#1a1a1a;border:none;border-radius:8px;cursor:pointer;letter-spacing:2px}
+
+  /* FINAL */
+  #final-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:70;display:none;flex-direction:column;align-items:center;justify-content:center;border-radius:8px}
+  #final-banner{background:rgba(5,10,5,0.94);border:3px solid #FFD700;border-radius:14px;padding:20px 32px;text-align:center;animation:bannerIn .5s cubic-bezier(.17,.67,.4,1.4);max-width:90%}
+  #final-title{font-family:'Black Han Sans',sans-serif;font-size:clamp(.9rem,2.5vw,1.2rem);color:#FFD700;margin-bottom:6px}
+  #final-score-line{font-family:'Black Han Sans',sans-serif;font-size:clamp(1.4rem,4.5vw,2.4rem);color:#fff;margin:8px 0}
+  #final-winner{font-family:'Black Han Sans',sans-serif;font-size:clamp(.95rem,3vw,1.5rem);letter-spacing:2px;margin-top:4px}
+  #final-restart-btn{margin-top:14px;padding:10px 28px;font-size:clamp(.78rem,2.2vw,.95rem);font-family:'Black Han Sans',sans-serif;background:#FFD700;color:#1a1a1a;border:none;border-radius:8px;cursor:pointer;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- SVG 국기 -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="flag-korea" viewBox="0 0 900 600">
+    <rect width="900" height="600" fill="#fff"/>
+    <circle cx="450" cy="300" r="150" fill="#CD2E3A"/>
+    <path d="M450,150 a150,150 0 0,1 0,300 a75,75 0 0,1 0,-150 a75,75 0 0,0 0,-150z" fill="#0047A0"/>
+    <circle cx="450" cy="225" r="75" fill="#CD2E3A"/>
+    <circle cx="450" cy="375" r="75" fill="#0047A0"/>
+    <g transform="translate(145,135) rotate(-45,75,75)"><rect x="30" y="48" width="90" height="18" fill="#000"/><rect x="30" y="72" width="90" height="18" fill="#000"/><rect x="30" y="96" width="90" height="18" fill="#000"/></g>
+    <g transform="translate(660,135) rotate(45,75,75)"><rect x="30" y="48" width="90" height="18" fill="#000"/><rect x="30" y="72" width="18" height="18" fill="#000"/><rect x="102" y="72" width="18" height="18" fill="#000"/><rect x="30" y="96" width="90" height="18" fill="#000"/></g>
+    <g transform="translate(145,390) rotate(45,75,75)"><rect x="30" y="48" width="90" height="18" fill="#000"/><rect x="30" y="72" width="18" height="18" fill="#000"/><rect x="102" y="72" width="18" height="18" fill="#000"/><rect x="30" y="96" width="18" height="18" fill="#000"/><rect x="102" y="96" width="18" height="18" fill="#000"/></g>
+    <g transform="translate(660,390) rotate(-45,75,75)"><rect x="30" y="48" width="18" height="18" fill="#000"/><rect x="102" y="48" width="18" height="18" fill="#000"/><rect x="30" y="72" width="18" height="18" fill="#000"/><rect x="102" y="72" width="18" height="18" fill="#000"/><rect x="30" y="96" width="18" height="18" fill="#000"/><rect x="102" y="96" width="18" height="18" fill="#000"/></g>
+  </symbol>
+  <symbol id="flag-brazil" viewBox="0 0 900 630">
+    <rect width="900" height="630" fill="#009B3A"/>
+    <polygon points="450,60 870,315 450,570 30,315" fill="#FEDF00"/>
+    <circle cx="450" cy="315" r="135" fill="#002776"/>
+    <path d="M320,277 Q450,230 580,277" stroke="#fff" stroke-width="22" fill="none"/>
+    <text x="450" y="330" text-anchor="middle" font-size="36" fill="#009B3A" font-family="serif" font-weight="bold" letter-spacing="2">ORDEM E PROGRESSO</text>
+    <g fill="#fff"><text x="400" y="290" font-size="28" text-anchor="middle">★</text><text x="450" y="270" font-size="28" text-anchor="middle">★</text><text x="500" y="290" font-size="28" text-anchor="middle">★</text><text x="370" y="310" font-size="28" text-anchor="middle">★</text><text x="530" y="310" font-size="28" text-anchor="middle">★</text><text x="390" y="340" font-size="28" text-anchor="middle">★</text><text x="510" y="340" font-size="28" text-anchor="middle">★</text></g>
+  </symbol>
+</svg>
+
+<!-- 세로모드 회전 안내 -->
+<div id="rotate-prompt">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-title">⚽ 축구스타 김도경</div>
+  <div class="rotate-sub">
+    핸드폰을 <b style="color:#FFD700">가로</b>로 돌려주세요!<br>
+    Please rotate your phone to <b style="color:#FFD700">landscape</b>
+  </div>
+  <div style="font-size:2.5rem;animation:arrowSide 1s ease-in-out infinite">↻</div>
+  @keyframes arrowSide{0%,100%{transform:rotate(0)}50%{transform:rotate(20deg)}}
+</div>
+
+<!-- 메인 앱 (가로모드) -->
+<div id="app">
+
+  <!-- INTRO -->
+  <div id="intro-screen">
+    <div id="intro-title">⚽ 축구스타 김도경</div>
+    <div id="intro-vs-row">
+      <span class="intro-team-name-kor">
+        <svg style="width:36px;height:24px;border-radius:2px;vertical-align:middle;margin-right:4px"><use href="#flag-korea"/></svg>대한민국
+      </span>
+      <span class="intro-vs-text">VS</span>
+      <span class="intro-team-name-bra">
+        브라질<svg style="width:36px;height:24px;border-radius:2px;vertical-align:middle;margin-left:4px"><use href="#flag-brazil"/></svg>
+      </span>
+    </div>
+    <div id="intro-subtitle">각자 5번씩 차고 5번씩 막는 치열한 승부!</div>
+    <div class="intro-role-btns">
+      <button class="intro-role-btn" id="intro-btn-korea" onclick="chooseTeam('korea')">
+        <svg style="width:32px;height:22px;border-radius:2px;flex-shrink:0"><use href="#flag-korea"/></svg>한국 선택 (선축)
+      </button>
+      <button class="intro-role-btn" id="intro-btn-brazil" onclick="chooseTeam('brazil')">
+        <svg style="width:32px;height:22px;border-radius:2px;flex-shrink:0"><use href="#flag-brazil"/></svg>브라질 선택 (후축)
+      </button>
+    </div>
+    <div class="intro-rule">
+      한국 항상 선축 · 🔴 한국 빨강 · 🟡 브라질 노랑<br>
+      5초 안에 방향 선택 · 못 고르면 상대방 승점
+    </div>
+  </div>
+
+  <!-- LEFT: SCORE -->
+  <div id="left-panel">
+    <h3>SCORE</h3>
+    <table id="score-table">
+      <thead>
+        <tr>
+          <th class="th-round">R</th>
+          <th class="th-korea"><div class="th-flag-cell"><svg class="th-flag-mini"><use href="#flag-korea"/></svg><span style="color:#ff8a80">KR</span></div></th>
+          <th class="th-brazil"><div class="th-flag-cell"><svg class="th-flag-mini"><use href="#flag-brazil"/></svg><span style="color:#F5D800">BR</span></div></th>
+        </tr>
+      </thead>
+      <tbody id="score-tbody"></tbody>
+    </table>
+    <div id="total-score"><span class="kor-sc">🇰🇷 0</span><br><span style="color:#666">:</span><br><span class="bra-sc">0 🇧🇷</span></div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="center-col">
+    <div id="game-title">⚽ 축구스타 김도경</div>
+    <div id="round-info"></div>
+    <div id="stadium-wrap">
+      <div id="stadium">
+        <div class="stripe" style="top:0;height:10%"></div>
+        <div class="stripe" style="top:20%;height:10%"></div>
+        <div class="stripe" style="top:40%;height:10%"></div>
+        <div class="stripe" style="top:60%;height:10%"></div>
+        <div class="stripe" style="top:80%;height:10%"></div>
+        <div id="field-center-line"></div>
+        <div id="pen-arc"></div>
+        <div id="goal-wrap">
+          <div class="post" id="bar-top"></div>
+          <div class="post" id="post-l"></div>
+          <div class="post" id="post-r"></div>
+          <div id="dep-top"></div><div id="dep-l"></div><div id="dep-r"></div>
+          <div id="goal-net"><canvas id="netCanvas"></canvas></div>
+          <div id="zone-nums">
+            <div class="zn">4</div><div class="zn">5</div><div class="zn">6</div>
+            <div class="zn">1</div><div class="zn">2</div><div class="zn">3</div>
+          </div>
+        </div>
+        <div class="person" id="keeper">
+          <div class="p-head"></div>
+          <div class="p-torso" id="keeper-shirt"></div>
+          <div class="p-legs"><div class="p-leg" id="keeper-leg-l"></div><div class="p-leg" id="keeper-leg-r"></div></div>
+        </div>
+        <div id="ball">⚽</div>
+        <div class="person" id="kicker">
+          <div class="p-head"></div>
+          <div class="p-torso" id="kicker-shirt"></div>
+          <div class="p-legs"><div class="p-leg" id="kicker-leg-l"></div><div class="p-leg" id="kicker-leg-r"></div></div>
+        </div>
+        <div id="countdown-display"></div>
+        <div id="status-bar"></div>
+        <div id="tutorial">
+          <h2>📋 조작 방법</h2>
+          <p id="tutorial-body"></p>
+          <div id="tut-role-big"></div>
+          <button class="start-btn" id="tut-start-btn">시작!</button>
+        </div>
+        <div id="result-overlay">
+          <div id="result-banner">
+            <div id="result-main"></div>
+            <div id="result-sub"></div>
+            <div id="result-log"></div>
+            <div id="result-scores"></div>
+            <button id="next-btn" onclick="nextRound()">▶ 다음 라운드</button>
+          </div>
+        </div>
+        <div id="final-overlay">
+          <div id="final-banner">
+            <div id="final-title">🏆 최종 결과 — 10라운드 완료!</div>
+            <div id="final-score-line"></div>
+            <div id="final-winner"></div>
+            <button id="final-restart-btn" onclick="fullRestart()">🔄 처음부터 다시</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: CONTROLS -->
+  <div id="right-panel">
+    <div id="click-hint">
+      <div id="click-role-badge"></div>
+      <div id="click-text">CLICK!</div>
+      <div id="click-arrow">▼</div>
+    </div>
+    <div id="right-label">방향<br>선택</div>
+    <div id="controls">
+      <button class="pos-btn" onclick="handleInput(4)">4</button>
+      <button class="pos-btn" onclick="handleInput(5)">5</button>
+      <button class="pos-btn" onclick="handleInput(6)">6</button>
+      <button class="pos-btn" onclick="handleInput(1)">1</button>
+      <button class="pos-btn" onclick="handleInput(2)">2</button>
+      <button class="pos-btn" onclick="handleInput(3)">3</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// NET
+(function(){
+  function draw(){
+    const c=document.getElementById('netCanvas'),w=document.getElementById('goal-net');
+    c.width=w.offsetWidth||300;c.height=w.offsetHeight||150;
+    const cx=c.getContext('2d');cx.strokeStyle='rgba(255,255,255,0.16)';cx.lineWidth=1;
+    const cols=12,rows=6,cw=c.width/cols,rh=c.height/rows;
+    for(let i=0;i<=cols;i++){cx.beginPath();cx.moveTo(i*cw,0);cx.lineTo(i*cw,c.height);cx.stroke()}
+    for(let j=0;j<=rows;j++){cx.beginPath();cx.moveTo(0,j*rh);cx.lineTo(c.width,j*rh);cx.stroke()}
+  }
+  draw();window.addEventListener('resize',draw);window._drawNet=draw;
+  window.shakeNet=function(){
+    let t=0;const id=setInterval(()=>{
+      t++;const c=document.getElementById('netCanvas'),cx=c.getContext('2d');
+      cx.clearRect(0,0,c.width,c.height);
+      cx.strokeStyle=`rgba(255,255,255,${0.16+Math.sin(t*.8)*.08})`;cx.lineWidth=1;
+      const cols=12,rows=6,cw=c.width/cols,rh=c.height/rows,amp=Math.max(0,6-t*.4);
+      for(let i=0;i<=cols;i++){cx.beginPath();for(let j=0;j<=rows;j++){const x=i*cw+Math.sin(j*.7+t*.5)*amp,y=j*rh;j===0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.stroke()}
+      for(let j=0;j<=rows;j++){cx.beginPath();for(let i=0;i<=cols;i++){const x=i*cw,y=j*rh+Math.sin(i*.5+t*.5)*amp;i===0?cx.moveTo(x,y):cx.lineTo(x,y)}cx.stroke()}
+      if(t>14){clearInterval(id);window._drawNet();}
+    },55);
+  };
+})();
+
+// AUDIO
+let audioCtx=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function beep(f,d,v,t){ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t||'sine';o.frequency.setValueAtTime(f,audioCtx.currentTime);g.gain.setValueAtTime(v||.18,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+(d||.35));o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+(d||.35));}
+function beepTick(){beep(330,.3,.2);}
+function beepShoot(){beep(880,.15,.28);setTimeout(()=>beep(1100,.18,.22),140);}
+function beepGoal(){[0,120,240].forEach(d=>setTimeout(()=>beep(1200+d*2,.2,.3),d));}
+function beepSave(){beep(400,.25,.28);setTimeout(()=>beep(320,.3,.25),160);}
+function beepMiss(){[0,80,160].forEach((d,i)=>setTimeout(()=>{ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(600-i*120,audioCtx.currentTime);g.gain.setValueAtTime(.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.25);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.25);},d));}
+function beepFinal(){[0,200,400,600].forEach(d=>setTimeout(()=>beep(800+d,.3,.3),d));}
+
+// UNIFORMS
+function setUniform(pid,team){
+  document.getElementById(pid+'-shirt').className='p-torso '+(team==='korea'?'korea-shirt':'brazil-shirt');
+  ['l','r'].forEach(s=>document.getElementById(pid+'-leg-'+s).className='p-leg '+(team==='korea'?'korea-leg':'brazil-leg'));
+}
+
+// ZONE POS
+function getSZ(){const s=document.getElementById('stadium');return{w:s.offsetWidth||400,h:s.offsetHeight||300};}
+function zonePos(z){
+  const {w,h}=getSZ();
+  const gw=w*.64,gL=(w-gw)/2,gT=h*.02,gH=h*.50;
+  const cX=[gL+gw*.13,gL+gw*.5,gL+gw*.87];
+  const rY=[gT+gH*.75,gT+gH*.28];
+  const col=(z-1)%3,row=z<=3?0:1;
+  return{left:(cX[col]-12)+'px',top:(rY[row])+'px'};
+}
+const ZN={1:'왼쪽 아래',2:'가운데 아래',3:'오른쪽 아래',4:'왼쪽 위',5:'가운데 위',6:'오른쪽 위'};
+const MISS_PROB={1:.20,2:0,3:.20,4:.30,5:0,6:.30};
+function isSaved(kz,pz){if(kz===2||kz===5)return pz===2||pz===5;return kz===pz;}
+
+// GAME STATE
+let playerTeam='korea',roundNum=0,scores={korea:0,brazil:0},roundLog=[];
+let timeLeft=5,timerInterval=null,gameActive=false,playerChoice=null,aiChoice=null,aiTimer=null;
+function kickerTeamNow(){return roundNum%2===1?'korea':'brazil';}
+function keeperTeamNow(){return roundNum%2===1?'brazil':'korea';}
+function playerRoleNow(){return playerTeam===kickerTeamNow()?'kicker':'keeper';}
+
+function chooseTeam(team){
+  ensureAudio();
+  playerTeam=team;roundNum=0;roundLog=[];scores={korea:0,brazil:0};
+  document.getElementById('intro-screen').style.display='none';
+  updateTable();showTutorial();
+}
+
+function updateTable(){
+  const tbody=document.getElementById('score-tbody');tbody.innerHTML='';
+  for(let k=1;k<=5;k++){
+    const korLog=roundLog.find(r=>r.round===2*k-1);
+    const braLog=roundLog.find(r=>r.round===2*k);
+    let kc='<span class="td-empty">·</span>',bc='<span class="td-empty">·</span>';
+    if(korLog)kc=korLog.result==='goal'?'<span class="td-o-kor">O</span>':'<span class="td-x-kor">X</span>';
+    if(braLog)bc=braLog.result==='goal'?'<span class="td-o-bra">O</span>':'<span class="td-x-bra">X</span>';
+    tbody.innerHTML+=`<tr><td>${k}</td><td>${kc}</td><td>${bc}</td></tr>`;
+  }
+  document.getElementById('total-score').innerHTML=`<span class="kor-sc">🇰🇷 ${scores.korea}</span><br><span style="color:#555">:</span><br><span class="bra-sc">${scores.brazil} 🇧🇷</span>`;
+}
+
+function showTutorial(){
+  roundNum++;
+  const role=playerRoleNow(),kt=kickerTeamNow(),kpt=keeperTeamNow();
+  const pair=Math.ceil(roundNum/2);
+  document.getElementById('round-info').textContent='라운드 '+roundNum+'/10 ('+pair+'/5세트)';
+  document.getElementById('tutorial-body').innerHTML=
+    '키커는 슈팅 방향을, 키퍼는 점프 방향을 정해서<br>'+
+    '<b style="color:#FFD700">1 · 2 · 3 · 4 · 5 · 6</b> 중 하나를 클릭하세요!<br><br>'+
+    '<span style="color:#aaffaa;font-size:.9rem">'+(kt==='korea'?'🇰🇷 한국':'🇧🇷 브라질')+' 공격 / '+(kpt==='korea'?'🇰🇷 한국':'🇧🇷 브라질')+' 수비</span>';
+  const isKicker=role==='kicker';
+  const rb=document.getElementById('tut-role-big');
+  rb.textContent='당신 역할: '+(isKicker?'⚽ 키커':'🧤 골키퍼');
+  rb.style.color=isKicker?'#ff8a80':'#82b1ff';
+  rb.style.background=isKicker?'rgba(220,50,50,0.18)':'rgba(50,100,220,0.18)';
+  rb.style.border='2px solid '+(isKicker?'#ff8a8066':'#82b1ff66');
+  const badge=document.getElementById('click-role-badge');
+  badge.textContent='당신: '+(isKicker?'⚽키커':'🧤키퍼');
+  badge.style.color=isKicker?'#ff8a80':'#82b1ff';
+  badge.style.background=isKicker?'rgba(220,50,50,0.22)':'rgba(50,100,220,0.22)';
+  badge.style.border='1px solid '+(isKicker?'#ff8a8055':'#82b1ff55');
+  document.getElementById('tutorial').style.display='flex';
+  document.getElementById('tut-start-btn').onclick=()=>{document.getElementById('tutorial').style.display='none';startRound();};
+}
+
+function startRound(){
+  const kt=kickerTeamNow(),kpt=keeperTeamNow();
+  setUniform('kicker',kt);setUniform('keeper',kpt);
+  gameActive=true;playerChoice=null;aiChoice=null;timeLeft=5;
+  document.getElementById('result-overlay').style.display='none';
+  document.getElementById('controls').style.display='grid';
+  document.getElementById('click-hint').style.display='flex';
+  const kicker=document.getElementById('kicker'),keeper=document.getElementById('keeper'),ball=document.getElementById('ball');
+  kicker.style.transition='none';keeper.style.transition='none';ball.style.transition='none';
+  const {h}=getSZ();
+  keeper.style.top=(Math.round(h*.02+h*.50*.55)-20)+'px';keeper.style.left='50%';keeper.style.transform='translateX(-50%)';
+  kicker.style.bottom='10%';kicker.style.left='50%';kicker.style.transform='translateX(-50%)';
+  ball.style.cssText='position:absolute;bottom:20%;left:50%;transform:translateX(-50%);font-size:clamp(18px,3.5vw,28px);z-index:15;filter:drop-shadow(0 2px 4px #00000099);transition:none';
+  void kicker.offsetWidth;
+  kicker.style.transition='all .5s cubic-bezier(.4,0,.2,1)';
+  keeper.style.transition='all .5s cubic-bezier(.4,0,.2,1)';
+  ball.style.transition='all .6s cubic-bezier(.25,.46,.45,.94)';
+  const role=playerRoleNow();
+  document.getElementById('status-bar').textContent=role==='kicker'?'슛 방향을 선택하세요!':'막을 방향을 선택하세요!';
+  setCountdown(5);
+  aiTimer=setTimeout(()=>{if(gameActive&&!aiChoice)aiChoice=Math.ceil(Math.random()*6);},800+Math.random()*3500);
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    if(timeLeft>0){setCountdown(timeLeft);beepTick();}
+    else{setCountdown(0,role);beepShoot();clearInterval(timerInterval);setTimeout(()=>{if(gameActive)resolveByTimeout();},400);}
+  },1000);
+}
+
+function setCountdown(n,role){
+  const el=document.getElementById('countdown-display');
+  el.textContent=n===0?(role==='keeper'?'JUMP!':'SHOOT!'):n;
+  el.style.color=n===0?'#FF5252':'#FFD700';
+  el.style.opacity='1';setTimeout(()=>el.style.opacity='0',650);
+}
+
+function handleInput(pos){
+  if(!gameActive)return;
+  if(playerChoice)return;
+  playerChoice=pos;
+  if(aiChoice!==null){clearInterval(timerInterval);if(aiTimer)clearTimeout(aiTimer);gameActive=false;playSequence(playerChoice,aiChoice);}
+}
+
+function resolveByTimeout(){
+  gameActive=false;if(aiTimer)clearTimeout(aiTimer);
+  if(!playerChoice)playerChoice=Math.ceil(Math.random()*6);
+  if(!aiChoice)aiChoice=Math.ceil(Math.random()*6);
+  playSequence(playerChoice,aiChoice);
+}
+
+function playSequence(pChoice,aChoice){
+  const role=playerRoleNow();
+  const kickerZone=role==='kicker'?pChoice:aChoice;
+  const keeperZone=role==='keeper'?pChoice:aChoice;
+  const missChance=MISS_PROB[kickerZone]||0;
+  const isMiss=(missChance>0)&&(Math.random()<missChance);
+  const kp=zonePos(kickerZone),kpK=zonePos(keeperZone);
+  const kicker=document.getElementById('kicker'),ball=document.getElementById('ball'),keeper=document.getElementById('keeper');
+  const {w,h}=getSZ();
+  document.getElementById('status-bar').textContent='키커는 움직였다!';
+  kicker.style.bottom='14%';
+  setTimeout(()=>{
+    ball.style.top=kp.top;ball.style.left=kp.left;ball.style.transform='translateX(-50%)';ball.style.fontSize='10px';
+    document.getElementById('status-bar').textContent=(kickerTeamNow()==='korea'?'🇰🇷':'🇧🇷')+' '+ZN[kickerZone]+'으로 찼다!';
+  },360);
+  setTimeout(()=>{
+    if(!isMiss){document.getElementById('status-bar').textContent=(keeperTeamNow()==='korea'?'🇰🇷':'🇧🇷')+' 키퍼 '+keeperZone+'번으로 뛰었다!';keeper.style.top=kpK.top;keeper.style.left=kpK.left;keeper.style.transform='translateX(-50%)';}
+    else document.getElementById('status-bar').textContent='공이 골대를 벗어났다!';
+  },500);
+  setTimeout(()=>{
+    if(isMiss){
+      beepMiss();ball.style.transition='all .55s ease-in';
+      const goLeft=(kickerZone===1||kickerZone===4);
+      ball.style.left=goLeft?'-30px':(w+30)+'px';ball.style.top=(parseInt(kp.top)-20)+'px';ball.style.fontSize='6px';ball.style.opacity='0.2';
+      document.getElementById('status-bar').textContent='빗나갔습니다!';
+      setTimeout(()=>showResult('miss',kickerZone,keeperZone),1800);
+    } else {
+      const saved=isSaved(kickerZone,keeperZone);
+      if(saved){beepSave();ball.style.transition='all .5s ease-in';ball.style.top=(h*.62)+'px';ball.style.left='50%';ball.style.fontSize='20px';document.getElementById('status-bar').textContent='선방!';}
+      else{beepGoal();shakeNet();document.getElementById('status-bar').textContent='골인!';}
+      setTimeout(()=>showResult(saved?'save':'goal',kickerZone,keeperZone),1800);
+    }
+  },1000);
+}
+
+function showResult(type,kickZ,keepZ){
+  const kt=kickerTeamNow(),kpt=keeperTeamNow();
+  const main=document.getElementById('result-main'),sub=document.getElementById('result-sub'),log=document.getElementById('result-log'),sc=document.getElementById('result-scores');
+  let logResult='save';
+  if(type==='goal'){logResult='goal';scores[kt]++;main.textContent='⚽ 골 인!';main.style.color=kt==='korea'?'#ff8a80':'#F5D800';sub.textContent=(kt==='korea'?'🇰🇷 한국':'🇧🇷 브라질')+' 득점!';log.textContent='키커→'+ZN[kickZ]+' | 키퍼→'+ZN[keepZ];}
+  else if(type==='save'){logResult='save';scores[kpt]++;main.textContent='🧤 선 방!';main.style.color=kpt==='korea'?'#ff8a80':'#F5D800';sub.textContent=(kpt==='korea'?'🇰🇷 한국':'🇧🇷 브라질')+' 키퍼 선방!';log.textContent='키커→'+ZN[kickZ]+' | 키퍼→'+ZN[keepZ];}
+  else{logResult='save';scores[kpt]++;main.textContent='💨 빗나감!';main.style.color='#aaa';sub.textContent='공이 골대를 벗어났습니다!';log.textContent=ZN[kickZ]+' 방향으로 빗나감';}
+  roundLog.push({round:roundNum,kickerTeam:kt,result:logResult});
+  updateTable();
+  sc.textContent='🇰🇷 '+scores.korea+' : '+scores.brazil+' 🇧🇷  ('+roundNum+'/10라운드)';
+  document.getElementById('next-btn').textContent=roundNum>=10?'🏆 최종 결과 보기':'▶ 다음 라운드';
+  document.getElementById('controls').style.display='none';
+  document.getElementById('click-hint').style.display='none';
+  document.getElementById('result-overlay').style.display='flex';
+}
+
+function nextRound(){
+  document.getElementById('result-overlay').style.display='none';
+  if(roundNum>=10)showFinalResult();else showTutorial();
+}
+
+function showFinalResult(){
+  beepFinal();
+  const {korea,brazil}=scores;
+  document.getElementById('final-score-line').innerHTML='<span style="color:#ff8a80">🇰🇷 '+korea+'</span> : <span style="color:#F5D800">'+brazil+' 🇧🇷</span>';
+  const fw=document.getElementById('final-winner');
+  if(korea>brazil)fw.innerHTML='🥇 <span style="color:#ff8a80">대한민국 승리!</span>';
+  else if(brazil>korea)fw.innerHTML='🥇 <span style="color:#F5D800">브라질 승리!</span>';
+  else fw.innerHTML='<span style="color:#aaffaa">🤝 무승부!</span>';
+  document.getElementById('final-overlay').style.display='flex';
+}
+
+function fullRestart(){
+  scores={korea:0,brazil:0};roundNum=0;roundLog=[];
+  document.getElementById('final-overlay').style.display='none';
+  document.getElementById('round-info').textContent='';
+  updateTable();
+  document.getElementById('intro-screen').style.display='flex';
+}
+</script>
+</body>
+</html>
